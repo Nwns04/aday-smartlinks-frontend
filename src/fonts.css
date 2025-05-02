@@ -1,0 +1,19 @@
+/* Supreme font-face declarations (as fallback) */
+@font-face {
+    font-family: 'Supreme';
+    src: url('/fonts/Supreme-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Supreme';
+    src: url('/fonts/Supreme-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Supreme';
+    src: url('/fonts/Supreme-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+  }

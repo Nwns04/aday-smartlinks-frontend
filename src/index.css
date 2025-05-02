@@ -1,16 +1,45 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+
+/* Flip animation for any .flip-animate toggles */
+@keyframes flip {
+  0%   { transform: rotateX(0deg); }
+  50%  { transform: rotateX(90deg); }
+  100% { transform: rotateX(0deg); }
+}
+.flip-animate {
+  animation: flip 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+@layer base {
+  html {
+    @apply scroll-smooth transition-colors duration-700;
+    /* apply our custom “ease-soft” timing and a slight start delay */
+    transition-timing-function: var(--tw-transition-timing-function, cubic-bezier(0.25,0.1,0.25,1));
+    transition-delay: 150ms;
+  }
+  
+  body {
+    @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-50 transition-colors duration-700;
+    font-family: 'Supreme', -apple-system, BlinkMacSystemFont, 
+                 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+                 'Open Sans', 'Helvetica Neue', sans-serif;
+    transition-timing-function: var(--tw-transition-timing-function, cubic-bezier(0.25,0.1,0.25,1));
+    transition-delay: 150ms;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-bold tracking-tight;
+    font-family: 'Supreme', sans-serif;
+  }
+
+  button, .font-ui {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+/* Smooth transitions for all interactive elements */
+a, button, input, textarea, select {
+  @apply transition-colors duration-500 ease-in-out;
 }
