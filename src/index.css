@@ -12,6 +12,14 @@
   animation: flip 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
+body.hide-navbar #navbar-wrapper {
+  display: none !important;
+}
+
+body.hide-footer footer {
+  display: none !important;
+}
+
 @layer base {
   html {
     @apply scroll-smooth transition-colors duration-700;

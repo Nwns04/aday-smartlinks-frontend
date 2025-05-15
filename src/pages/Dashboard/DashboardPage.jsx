@@ -176,7 +176,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Spotify Integration */}
-        <SpotifyConnectPrompt user={user} setSpotifyProfile={setSpotifyProfile} />
+        {/* <SpotifyConnectPrompt user={user} setSpotifyProfile={setSpotifyProfile} /> */}
 
       </div>
 

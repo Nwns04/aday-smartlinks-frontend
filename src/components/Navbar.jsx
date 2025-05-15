@@ -85,7 +85,7 @@ const Navbar = () => {
   }, [location]);
 
   return (
-    <>
+    <div id="navbar-wrapper">
       <nav className="sticky top-0 z-40 flex justify-between items-center p-4 bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-sm dark:shadow-gray-700/50">
         <div className="flex items-center space-x-2">
           <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
@@ -451,7 +451,7 @@ const Navbar = () => {
       {showLinkSelector && (
         <LinkTypeSelector onClose={() => setShowLinkSelector(false)} />
       )}
-    </>
+    </div>
   );
 };
 

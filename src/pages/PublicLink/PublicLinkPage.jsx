@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "../../context/AuthContext";
 import QRCode from "react-qr-code";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import API from "../../services/api";
 import { motion } from "framer-motion";
 import CountdownTimer from "../../components/CountdownTimer";
@@ -22,6 +22,8 @@ import LoadingScreen from "../../components/common/LoadingScreen";
 import usePublicCampaign from "../../hooks/usePublicCampaign";
 import PageEditor from "../../components/PublicLink/PageEditor";
 import PageViewer from "../../components/PublicLink/PageViewer";
+import mixpanel from '../../utils/mixpanel';
+
 
 const PublicLink = () => {
   const { slug } = useParams();
@@ -53,6 +55,37 @@ const PublicLink = () => {
    campaignOwnerId &&
    user._id.toString() === campaignOwnerId.toString();
 
+   useEffect(() => {
+    mixpanel.track('PublicLink Viewed', {
+      slug,
+      referrer: document.referrer,
+      url: window.location.href
+    });
+  }, [slug]);
+
+// at the top of PublicLink.jsx
+const PrivacyNotice = () => (
+  <div className="bg-gray-100 text-gray-700 py-6 mt-12">
+    <div className="max-w-xl mx-auto px-4 text-center space-y-2">
+      <p className="text-sm">
+        We collect your email and click data to power presaves and improve our links.
+        By using this page you agree to our{" "}
+        <Link to="/privacy" className="underline hover:text-gray-900">
+          Privacy Policy
+        </Link>{" "}
+        and{" "}
+        <Link to="/terms" className="underline hover:text-gray-900">
+          Terms of Service
+        </Link>.
+      </p>
+      <p className="text-xs text-gray-500">
+        © {new Date().getFullYear()} Aday Smartlinks. All rights reserved.
+      </p>
+    </div>
+  </div>
+);
+
+
   const handleSave = async (updates) => {
     await API.patch(`/campaigns/${slug}`, updates);
     queryClient.invalidateQueries(['publicCampaign', slug]);
@@ -64,6 +97,50 @@ const PublicLink = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  useEffect(() => {
+    document.body.classList.add("hide-navbar");
+    return () => {
+      document.body.classList.remove("hide-navbar");
+    };
+  }, []);
+
+  useEffect(() => {
+    document.body.classList.add("hide-navbar", "hide-footer");
+    return () => {
+      document.body.classList.remove("hide-navbar", "hide-footer");
+    };
+  }, []);
+
+  useEffect(() => {
+    const start = Date.now();
+    const timer = setInterval(() => {
+      const timeSpent = Math.floor((Date.now() - start) / 1000);
+      mixpanel.track('Time on Page', {
+        slug,
+        timeSpent,
+      });
+    }, 60000); // Track every minute
+  
+    return () => clearInterval(timer);
+  }, [slug]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollPercent = Math.round((scrollTop / docHeight) * 100);
+  
+      if (scrollPercent >= 90) {
+        mixpanel.track('Scrolled to Bottom', { slug });
+        window.removeEventListener("scroll", handleScroll); // Trigger once
+      }
+    };
+  
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [slug]);
+  
 
   useEffect(() => {
     let sessionId = localStorage.getItem("sessionId");
@@ -107,7 +184,57 @@ const PublicLink = () => {
     }
   }, [campaignData, campaignLoading, isError, slug]);
 
+  useEffect(() => {
+    const startTime = Date.now();
+    return () => {
+      const duration = Math.round((Date.now() - startTime) / 1000); // seconds
+      mixpanel.track("Time on PublicLink", {
+        slug,
+        secondsSpent: duration,
+      });
+    };
+  }, [slug]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const fullHeight = document.body.offsetHeight;
+      const scrollPercent = Math.round(((scrollTop + windowHeight) / fullHeight) * 100);
+  
+      if (scrollPercent >= 90) {
+        mixpanel.track("Scrolled to Bottom", { slug });
+        window.removeEventListener("scroll", handleScroll);
+      }
+    };
+  
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [slug]);
+
+  useEffect(() => {
+  if (user?._id) {
+    mixpanel.identify(user._id);
+    mixpanel.people.set({
+      email: user.email,
+      name: user.name,
+      signup_date: user.createdAt,
+    });
+  }
+}, [user]);
+
+const handleQRCodeClick = () => {
+  mixpanel.track("QR Code Clicked", { slug });
+};
+
+
   const handleClick = async (link, platform) => {
+    mixpanel.track('Platform Clicked', {
+      slug,
+      platform,
+      clicksSoFar: clickCount
+    });
+    mixpanel.people.increment('Clicks', 1);
     try {
       await API.post(`/campaigns/track/${slug}`, {
         platform,
@@ -126,6 +253,13 @@ const PublicLink = () => {
   
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
+    mixpanel.track('Presave Form Submitted', {
+      slug,
+      email,
+      clicksBeforeSubmit: clickCount
+    });
+    mixpanel.people.increment('Clicks', 1);
+
     try {
       await API.post(`/campaigns/email/${slug}`, { 
         email,
@@ -144,10 +278,13 @@ const PublicLink = () => {
     }
   };
 
+  
+
   if (campaignLoading || loading) return <LoadingScreen message="Loading your dashboard..." />;
 
   if (!campaign && !biolink) {
     return (
+      <>
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 p-6 text-center">
         <motion.div
           initial={{ scale: 0.8 }}
@@ -167,6 +304,8 @@ const PublicLink = () => {
           Return Home
         </a>
       </div>
+      <PrivacyNotice />
+      </>
     );
   }
 
@@ -210,6 +349,7 @@ const PublicLink = () => {
     };
     
     return (
+      <>
       <div className="min-h-screen relative overflow-hidden">
         {/* Edit Button */}
         {isOwner && (
@@ -354,6 +494,7 @@ const PublicLink = () => {
                     bgColor="transparent"
                     fgColor="currentColor"
                     className="text-gray-700 inline-block p-2 bg-white rounded"
+                    onClick={handleQRCodeClick}
                   />
                   <p className="text-sm mt-2 text-gray-500">Scan to open this link</p>
                 </div>
@@ -364,7 +505,7 @@ const PublicLink = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
-                    {clickCount} {clickCount === 1 ? 'click' : 'clicks'} tracked
+                    {/* {clickCount} {clickCount === 1 ? 'click' : 'clicks'} tracked */}
                   </motion.div>
                 )}
               </div>
@@ -381,11 +522,14 @@ const PublicLink = () => {
           )}
         </div>
       </div>
+      <PrivacyNotice />
+      </>
     );
   }
 
   if (biolink) {
     return (
+      <>
       <div className="min-h-screen relative overflow-hidden">
         {biolink.profileImage && (
           <div className="fixed inset-0 -z-10">
@@ -491,10 +635,14 @@ const PublicLink = () => {
           {isLoggedIn && <ShareSectionBio slug={slug} />}
         </div>
       </div>
+      <PrivacyNotice />
+      </>
     );
   }
 
+
   return null;
+  
 };
 
 export default PublicLink;

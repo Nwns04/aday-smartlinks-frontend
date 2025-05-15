@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import API from "../services/api";
 import { toast } from "react-hot-toast";
+import { FiMusic, FiUser, FiLink2, FiX } from "react-icons/fi";
 
 const SpotifyCard = ({ user, setSpotifyProfile }) => {
   const [recentTracks, setRecentTracks] = useState([]);
@@ -63,103 +64,131 @@ const SpotifyCard = ({ user, setSpotifyProfile }) => {
 
   const reconnectSpotify = () => {
     window.location.href = `http://localhost:5000/auth/spotify?email=${encodeURIComponent(user.email)}`;
-
   };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("spotify") === "connected") {
       toast.success("Spotify account connected!");
-      // Clean the URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
-  
 
   return (
     <div
       id="spotify-section"
-      className="p-6 rounded-xl mb-8 shadow-md bg-gradient-to-r from-[#1DB954] to-emerald-600 text-white"
+      className="p-6 rounded-xl mb-8 shadow-md bg-gradient-to-br from-[#1DB954] to-emerald-700 text-white relative overflow-hidden"
     >
-      {/* <h3 className="text-lg font-bold mb-4">Spotify Account</h3> */}
+      {/* Decorative elements */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
 
-      {connectionError && (
-        <div className="mb-4 p-2 bg-red-100 text-red-700 rounded text-sm">
-          {connectionError}
-          <button
-            onClick={reconnectSpotify}
-            className="ml-2 text-red-700 underline"
-          >
-            Reconnect
-          </button>
-        </div>
-      )}
-      {user?.isVerifiedArtist && (
-  <p className="text-xs mt-1 text-yellow-300">
-    ✅ Verified Spotify Artist
-  </p>
-)}
+      <div className="relative z-10">
+        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <FiMusic className="text-white" />
+          Spotify Connection
+        </h3>
 
-      {profile ? (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <img
-                src={profile.images?.[0]?.url || "https://via.placeholder.com/50"}
-                alt="Spotify"
-                className="w-12 h-12 rounded-full"
-              />
-              <div>
-              <p className="font-medium" title={profile.display_name}>
-  {profile.display_name}
-</p>
-<p className="font-medium flex items-center gap-2" title={profile.display_name}>
-  {profile.display_name}
-  {user?.isVerifiedArtist && (
-    <span className="bg-yellow-300 text-black text-xs px-2 py-0.5 rounded-full">
-      Verified Artist
-    </span>
-  )}
-</p>
-                <p className="font-medium">{profile.display_name}</p>
-                {/* <p className="text-xs opacity-80">
-                  {profile.email || "No email provided"}
-                </p> */}
-              </div>
-            </div>
+        {connectionError && (
+          <div className="mb-4 p-3 bg-red-100/20 backdrop-blur-sm text-white rounded-lg text-sm flex items-center justify-between">
+            <span>{connectionError}</span>
             <button
-              onClick={disconnectSpotify}
-              className="bg-white text-green-600 px-3 py-1 rounded text-sm"
-              disabled={loading}
+              onClick={reconnectSpotify}
+              className="ml-2 text-white underline flex items-center gap-1"
             >
-              {loading ? "Disconnecting..." : "Disconnect"}
+              <FiLink2 size={14} />
+              Reconnect
             </button>
           </div>
+        )}
 
-          {recentTracks.length > 0 && (
-            <div>
-              <h4 className="font-semibold text-sm">Recently Played</h4>
-              <ul className="text-xs mt-2 space-y-1">
-                {recentTracks.slice(0, 5).map((track, index) => (
-                  <li key={index} className="border-b border-white/30 py-1">
-                    {track.name} - {track.artists.map((a) => a.name).join(", ")}
-                  </li>
-                ))}
-              </ul>
+        {loading && (
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-xl z-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          </div>
+        )}
+
+        {profile ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <img
+                    src={profile.images?.[0]?.url || "https://via.placeholder.com/50"}
+                    alt="Spotify"
+                    className="w-12 h-12 rounded-full object-cover border-2 border-white"
+                  />
+                  {user?.isVerifiedArtist && (
+                    <div className="absolute -bottom-1 -right-1 bg-yellow-400 text-black text-xs px-1 rounded-full">
+                      ✓
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <p className="font-semibold flex items-center gap-2">
+                    {profile.display_name}
+                  </p>
+                  <p className="text-xs opacity-80 flex items-center gap-1">
+                    <FiUser size={12} />
+                    {profile.followers?.total?.toLocaleString() || "0"} followers
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={disconnectSpotify}
+                className="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-full text-sm flex items-center gap-1 transition-colors"
+                disabled={loading}
+              >
+                <FiX size={14} />
+                Disconnect
+              </button>
             </div>
-          )}
-        </div>
-      ) : (
-        <div className="text-center py-4">
-          <p className="text-sm opacity-80 mb-3">Spotify account not connected</p>
-          <button
-            onClick={reconnectSpotify}
-            className="bg-white text-green-600 px-4 py-2 rounded text-sm"
-          >
-            Connect Spotify
-          </button>
-        </div>
-      )}
+
+            {recentTracks.length > 0 && (
+              <div className="bg-black/10 p-3 rounded-lg">
+                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                  <FiMusic size={14} />
+                  Recently Played
+                </h4>
+                <ul className="space-y-2">
+                  {recentTracks.slice(0, 5).map((track, index) => (
+                    <li 
+                      key={index} 
+                      className="flex items-center gap-2 p-2 hover:bg-white/5 rounded transition-colors"
+                    >
+                      <img 
+                        src={track.album?.images?.[2]?.url || "https://via.placeholder.com/40"} 
+                        className="w-8 h-8 rounded" 
+                        alt="Album cover" 
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{track.name}</p>
+                        <p className="text-xs opacity-80 truncate">
+                          {track.artists.map((a) => a.name).join(", ")}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-4">
+            <div className="bg-white/10 p-6 rounded-lg">
+              <FiMusic size={32} className="mx-auto mb-3 text-white/50" />
+              <p className="text-sm opacity-80 mb-4">Connect your Spotify account to see your profile and recent activity</p>
+              <button
+                onClick={reconnectSpotify}
+                className="bg-white text-green-600 hover:bg-gray-100 px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 mx-auto transition-colors"
+              >
+                <FiLink2 size={16} />
+                Connect Spotify
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
